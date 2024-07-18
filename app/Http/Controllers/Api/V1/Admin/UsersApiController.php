@@ -266,6 +266,46 @@ class UsersApiController extends Controller
 
         return response()->json(['status'=>true,'message'=>'Successful Register Token','data'=>[]], $this->successStatus);
     }
+    public function validateTokens()
+    {
+            $url = 'https://fcm.googleapis.com/fcm/send';
+            $headers = [
+                'Content-Type: application/json',
+                'Authorization: key=AAAAnrysdHA:APA91bH1SLdG5jVObcZzY5EZoqbHjlB35qZLGS5ANLHUl_pbJHGQsgg4kGmSrNcgwVF0GsYDHyk1Sh0tHybhdNzwzQBcSDtjEW5xzhX2-PIdD0foHHq4FN1Z1caZFbLgo1AgS-2SGThU' // Replace with your FCM server key
+            ];
+            $fcmTokens = Firebasetoken::pluck('firebasekey')->toArray();
+            foreach ($fcmTokens as $token) {
+                $arrayToSend = [
+                    'to' => $token,
+                    'validate_only' => true // This ensures it's a dry run
+                ];
+
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($arrayToSend));
+                curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+                $result = curl_exec($ch);
+                curl_close($ch);
+
+                $responseArray = json_decode($result, true);
+                foreach ($responseArray['results'] as $index => $result) {
+                    if (isset($result['error'])) {
+                        $invalidToken = $fcmTokens[$index];
+                        $this->removeInvalidToken($invalidToken);
+                        }
+                }
+                return "validate done";
+            }
+    }
+
+    private function removeInvalidToken($token)
+    {
+        \App\Firebasetoken::where('firebasekey', $token)->delete();
+    }
 
     public function isSuccessPush($tokens,$title,$body,$data){
         $ch = curl_init("https://fcm.googleapis.com/fcm/send");
@@ -292,7 +332,8 @@ class UsersApiController extends Controller
             ];
         else
             $arrayToSend = [
-                'to' => $token, 
+                'to' => $token,
+                
                 'notification' => $notification,
                 'data' => $data,
                 'priority'=>10
@@ -324,18 +365,20 @@ class UsersApiController extends Controller
         // $title         = $data('title');
         // $description   = $data('message');
         // $token         = $data('fcmTokens');
-
-       
         $jsonArray = json_decode($this->isSuccessPush($fcmTokens,$title,$message,$data),true);
-        
-      
-            return Response::json(array(
+        foreach ($jsonArray['results'] as $index => $result) {
+        if (isset($result['error'])) {
+            $invalidToken = $fcmTokens[$index];
+            $this->removeInvalidToken($invalidToken);
+            }
+        }
+        return Response::json(array(
                                         'status' => true,
                                         'message' => 'Success Sent',
                                         'data' => $jsonArray
                                         ));
     }
-
+   
     public function send_notification(Request $request){
    
             $title         = $request->input('title');

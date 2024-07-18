@@ -47,7 +47,11 @@ class AnnouncementController extends Controller
 
         return view('admin.announcement.edit', compact('classes','announcement'));
     }
-
+    public function validateTokens(){
+        $fcmTokens = Firebasetoken::pluck('firebasekey')->toArray();
+        $userApiController = new UsersApiController;
+        $userApiController->validateTokens($fcmTokens);
+    }
     public function store(Request $request){
 
        // dd($request->all());
@@ -96,13 +100,9 @@ class AnnouncementController extends Controller
                 $fcmTokens = Firebasetoken::pluck('firebasekey')->toArray();
                 $title = $request->input('txt_title');
                 $message = $request->input('txt_body_hidden'); 
-
-                $ttitit =  Notification::send(Auth()->user(),new FirebaseNotification($title,$message,$fcmTokens,'ICS News',$announcement->id)); //$announcement->thumbnail
-                return $ttitit;
+                Notification::send(Auth()->user(),new FirebaseNotification($title,$message,$fcmTokens,'ICS News',$announcement->id)); //$announcement->thumbnail
                 // $firebasetokens = Firebasetoken::all();
-
                 // foreach($firebasetokens as $firebasetoken){
-                    
                 //     $fcmTokens = $firebasetoken->firebasekey;
                 //     $title = $request->input('txt_title');
                 //     $message = $request->input('txt_body_hidden');  

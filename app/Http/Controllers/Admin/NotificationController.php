@@ -152,11 +152,9 @@ class NotificationController extends Controller
 
                 $title = $request->input('txt_title');
                 $body = $request->input('txt_body_hidden');  
-
                 foreach($students as $student){
                     $fcmTokens=$student->firebasetokens()->pluck('firebasekey')->toArray();
-                 $kkkkk=    $student->notify(new FirebaseNotification($title,$body,$fcmTokens,$title,$message->id,$message->thumbnail,'message'));   
-                  return $kkkkk;
+                  $student->notify(new FirebaseNotification($title,$body,$fcmTokens,$title,$message->id,$message->thumbnail,'message'));   
                 }
 
                 // Notification::send(Auth()->user(),new FirebaseNotification($title,$body,$fcmTokens,$title,$message->id,'','message')); //$message->thumbnail

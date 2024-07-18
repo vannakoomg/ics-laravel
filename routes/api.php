@@ -82,6 +82,7 @@ Route::post('send_notification', 'Api\V1\Admin\UsersApiController@send_notificat
 
 
 Route::get('register_firebasetoken', 'Api\V1\Admin\UsersApiController@register_firebasetoken');
+Route::post('validate_tokens', 'Api\V1\Admin\UsersApiController@validateTokens');
 
 Route::group(['prefix' => 'v1', 'as' => 'api.', 'namespace' => 'Api\V1\Admin', 'middleware' => ['auth:api']], function () {
 
@@ -111,5 +112,3 @@ Route::post('/tracking',[TrackMenuMobileController::class,'create']);
 Route::post('menu','Api\V1\Admin\UsersApiController@muteCanteenNotification');
 Route::get('/menu',[CanteenController::class,'getMenu']);
 Route::post('truncateTable', [EventsController::class, 'truncateTable']);
-
-
