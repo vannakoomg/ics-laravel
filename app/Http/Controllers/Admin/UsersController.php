@@ -18,17 +18,22 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Arr;
 use DataTables;
 
+
 // use PDF;
 // use Mpdf\Mpdf;
 // use Dompdf\Dompdf;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Http\Controllers\Api\V1\Admin\UsersApiController;
+use Illuminate\Support\Facades\Log; // Correct import for Log
+use App\Jobs\ValidateToken;
 
 class UsersController extends Controller
 {
 
     private $collection_guardian =['Father','Mother','Relative'];
-
-
+    public function validateToken (){
+        ValidateToken::dispatch();
+    }
     public function student_promote(Request $request){
         abort_if(Gate::denies('school-setup') && Gate::denies('user_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
@@ -40,12 +45,9 @@ class UsersController extends Controller
             'campus' => $campus_selected
         ];
 
-        
         //--------- Prrocess update ----------------
         if(!empty($request->btn_promote)){
-           
             $ids = $request->input('chk', []);
-
             User::whereIn('id',$ids)->update(['class_id'=>$request->new_class]);
 
         }
@@ -145,8 +147,8 @@ class UsersController extends Controller
 
             view()->share('user',null);
             view()->share('users',$users);
-
            // PDF::setOptions(['dpi'=>150]);
+        //    dd($users);
             $pdf = PDF::loadView('admin.users.pdf-back',compact($user, $users))->setPaper('a4','landscape');
             // $pdf->setOptions(['dpi'=>120]);
             return $pdf->download('pickupcard-back-' . $selected_class->name .'.pdf');
@@ -170,7 +172,7 @@ class UsersController extends Controller
 
         return view('admin.users.pickup-card', compact('selected_campus','users','schoolClasses','selected_class'));
     }
-
+     
     public function store(StoreUserRequest $request)
     {
         $data=(array) $request->all();
